@@ -1,0 +1,6 @@
+name = BSOD
+description = If Backdrop version is over 1.29 then redirects all non-admin paths to display a mock BSOD screen
+backdrop = 1.x
+type = module
+version = 0.91
+package = AAA

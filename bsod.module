@@ -1,0 +1,67 @@
+<?php
+
+/**
+ * Implements hook_init().
+ */
+function bsod_init() {
+  // Check the Backdrop version.
+  if (!bsod_check_version()) {
+    watchdog('bsod', 'Backdrop version is below 1.30. The BSOD module will not execute.', [], WATCHDOG_WARNING);
+    return;
+  }
+
+  // Log the current path for debugging.
+  watchdog('bsod', 'Current path is: @path', ['@path' => current_path()], WATCHDOG_DEBUG);
+
+  $current_path = current_path();
+  if (strpos($current_path, 'js/admin_bar') === 0 || strpos($current_path, 'admin') === 0) {
+    return;
+  }
+
+  if ($current_path === '<front>' || $current_path === 'home') {
+    bsod_redirect_to_image();
+  }
+}
+
+/**
+ * Redirect to the image file.
+ */
+function bsod_redirect_to_image() {
+  // Path to the image file in the module's directory.
+  $image_path = backdrop_get_path('module', 'bsod') . '/images/bsod-image.jpg';
+
+  // Check if the file exists.
+  if (!file_exists($image_path)) {
+    watchdog('bsod', 'Image file not found: @path', ['@path' => $image_path], WATCHDOG_ERROR);
+    drupal_not_found();
+    return;
+  }
+
+  // Serve the image with the correct headers.
+  header('Content-Type: image/jpeg');
+  header('Content-Length: ' . filesize($image_path));
+  readfile($image_path);
+
+  // Stop further processing.
+  backdrop_exit();
+}
+
+/**
+ * Check if the Backdrop version is greater than 1.29.
+ *
+ * @return bool
+ *   TRUE if the version is greater than 1.29, FALSE otherwise.
+ */
+function bsod_check_version() {
+  // Access the VERSION constant defined by Backdrop CMS.
+  if (defined('VERSION')) {
+    watchdog('bsod', 'Backdrop version detected: @version', ['@version' => VERSION], WATCHDOG_DEBUG);
+
+    // Compare the version to 1.29.
+    return version_compare(VERSION, '1.29', '>');
+  }
+
+  // If the version constant is not defined, assume incompatible.
+  watchdog('bsod', 'Backdrop version could not be determined.', [], WATCHDOG_ERROR);
+  return FALSE;
+}
